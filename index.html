@@ -28,9 +28,9 @@ button{font-family:inherit}
 .top .back{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.9rem;cursor:pointer}
 .progbar{height:4px;background:#d3dde3}
 .progbar>div{height:100%;width:0;background:var(--teal);transition:width .3s}
-.secnav{position:sticky;top:54px;z-index:15;background:#fff;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none}
+.secnav{position:sticky;top:54px;z-index:15;transform:translateZ(0);background:#fff;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none}
 .secnav::-webkit-scrollbar{display:none}
-.navchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--blue);background:#f4f7f9;border:1.5px solid var(--line);border-radius:18px;padding:6px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.navchip{flex:0 0 auto;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--blue);background:#f4f7f9;border:1.5px solid var(--line);border-radius:18px;padding:6px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
 .navchip .nr{background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem}
 .navchip .prog{font-weight:600;color:var(--grey);font-size:.72rem}
 .navchip.started{border-color:#9fd9c9}
@@ -38,7 +38,7 @@ button{font-family:inherit}
 .navchip.done .nr{background:var(--teal)}
 .navchip.active{box-shadow:0 0 0 2px var(--blue) inset}
 main{max-width:1000px;margin:0 auto;padding:10px 10px 120px}
-.card{background:#fff;border-radius:14px;padding:16px 16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(2,70,101,.08)}
+.card{background:#fff;border-radius:14px;padding:16px 16px 18px;margin:12px 0;border:1px solid #dde6eb;content-visibility:auto;contain-intrinsic-size:auto 900px}
 .card h2{margin:0 0 4px;color:var(--blue);font-size:1.15rem;display:flex;align-items:center;gap:10px}
 .card h2 .nr{background:var(--teal);color:#fff;border-radius:8px;min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
 .intro{color:var(--grey);font-size:.88rem;margin:2px 0 6px}
@@ -375,6 +375,7 @@ function db(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('i
 async function idbPut(p){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('photos','readwrite');t.objectStore('photos').put(p);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
 async function idbDel(id){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('photos','readwrite');t.objectStore('photos').delete(id);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
 async function idbByBogen(b){const d=await db();return new Promise((res,rej)=>{const r=d.transaction('photos').objectStore('photos').index('bogen').getAll(b);r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+function makeThumb(src,max=360){return new Promise(res=>{const img=new Image();img.onload=()=>{const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.7));};img.onerror=()=>res(src);img.src=src;});}
 function downscale(file,max=1600,q=.78){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{let w=img.naturalWidth,hh=img.naturalHeight;const s=Math.min(1,max/Math.max(w,hh));w=Math.round(w*s);hh=Math.round(hh*s);const c=document.createElement('canvas');c.width=w;c.height=hh;c.getContext('2d').drawImage(img,0,0,w,hh);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q));};img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bildformat nicht lesbar'));};img.src=url;});}
 
 /* ===== localStorage (Formulardaten) ===== */
@@ -429,15 +430,16 @@ function photoWidget(slot){
   cap.addEventListener('change',()=>{p.caption=cap.value;idbPut(p);});
   const del=h('button',{type:'button',class:'del',title:'Foto löschen'},'×');
   del.addEventListener('click',async()=>{if(!confirm('Foto löschen?'))return;await idbDel(p.id);photos=photos.filter(x=>x.id!==p.id);draw();updateProgress();});
-  const img=h('img',{src:p.data,alt:p.caption||'Foto',class:p.kind==='sketch'?'sk':null});
-  img.addEventListener('click',()=>p.kind==='sketch'?openSketch(p.data,async data=>{p.data=data;await idbPut(p);draw();save();}):zoom(p.data));
+  const img=h('img',{src:p.thumb||'data:image/gif;base64,R0lGODlhAQABAAAAACw=',alt:p.caption||'Foto',class:p.kind==='sketch'?'sk':null,loading:'lazy',decoding:'async'});
+  if(!p.thumb)makeThumb(p.data).then(t=>{p.thumb=t;img.src=t;idbPut(p);});
+  img.addEventListener('click',()=>p.kind==='sketch'?openSketch(p.data,async data=>{p.data=data;p.thumb=await makeThumb(data);await idbPut(p);draw();save();}):zoom(p.data));
   const fig=h('figure',null,img,del,cap);
   if(p.kind==='sketch')fig.append(h('span',{class:'sktag'},'✏️ Skizze – antippen zum Bearbeiten'));
   thumbs.append(fig);});};
  const skBtn=h('button',{type:'button',class:'btn btn-ghost btn-sm'},'✏️ Skizze');
- skBtn.addEventListener('click',()=>openSketch(null,async data=>{const p={id:uid(),bogen:cur.id,slot,caption:'',data,kind:'sketch',ts:Date.now()};await idbPut(p);photos.push(p);draw();save();}));
+ skBtn.addEventListener('click',()=>openSketch(null,async data=>{const p={id:uid(),bogen:cur.id,slot,caption:'',data,thumb:await makeThumb(data),kind:'sketch',ts:Date.now()};await idbPut(p);photos.push(p);draw();save();}));
  const mk=(label,cam)=>{const inp=h('input',{type:'file',accept:'image/*',multiple:cam?null:true,capture:cam?'environment':null});
-  inp.addEventListener('change',async()=>{const files=[...inp.files];inp.value='';for(const fl of files){try{const data=await downscale(fl);const p={id:uid(),bogen:cur.id,slot,caption:'',data,ts:Date.now()};await idbPut(p);photos.push(p);draw();}catch(e){alert('Foto konnte nicht gespeichert werden: '+e.message);}}save();});
+  inp.addEventListener('change',async()=>{const files=[...inp.files];inp.value='';for(const fl of files){try{const data=await downscale(fl);const p={id:uid(),bogen:cur.id,slot,caption:'',data,thumb:await makeThumb(data),ts:Date.now()};await idbPut(p);photos.push(p);draw();}catch(e){alert('Foto konnte nicht gespeichert werden: '+e.message);}}save();});
   return h('label',{class:'btn btn-ghost btn-sm'},label,inp);};
  draw();
  return h('div',{class:'photos'},thumbs,h('div',{class:'photobtns'},mk('📷 Kamera',true),mk('🖼 Galerie / Dateien',false),skBtn));
@@ -473,7 +475,10 @@ function renderEditor(){
  });
  updateProgress();window.scrollTo(0,0);
  if(spy)spy.disconnect();
- if('IntersectionObserver'in window){spy=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const id=e.target.dataset.sec;document.querySelectorAll('.navchip').forEach(c=>c.classList.toggle('active',c.dataset.sec===id));const c=$(`.navchip[data-sec="${id}"]`);c&&c.scrollIntoView({inline:'center',block:'nearest'});}});},{rootMargin:'-120px 0px -65% 0px'});document.querySelectorAll('#sections section').forEach(s=>spy.observe(s));}
+ let activeSec=null;
+ const setActive=id=>{if(id===activeSec)return;activeSec=id;let chip=null;nav.querySelectorAll('.navchip').forEach(c=>{const on=c.dataset.sec===id;c.classList.toggle('active',on);if(on)chip=c;});
+  if(chip)requestAnimationFrame(()=>{nav.scrollLeft=chip.offsetLeft-(nav.clientWidth-chip.offsetWidth)/2;});};
+ if('IntersectionObserver'in window){spy=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting)setActive(e.target.dataset.sec);},{rootMargin:'-120px 0px -70% 0px'});document.querySelectorAll('#sections section').forEach(s=>spy.observe(s));}
 }
 
 function secProgress(b,sec){let tot=0,ok=0;sec.fields.forEach(f=>{if(f.type==='hint')return;tot++;const key=sec.id+'.'+f.id;if(f.type==='photos'){if(photos.some(p=>p.slot===key))ok++;}else if(f.type==='repeat'){if((b.v[key]||[]).some(it=>Object.keys(it).some(k=>k!=='_uid')))ok++;}else if(filled(b.v[key]))ok++;});return[ok,tot];}
