@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iSFP-Aufnahmebogen · Ingenieurbüro Kaufmann</title>
+<meta name="theme-color" content="#024665">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="iSFP-Aufnahme">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#024665;--teal:#00AB84;--grey:#6B7680;--bg:#eef3f5;--line:#d3dde3;--danger:#b8402f;--tealbg:#e6f7f2}
+*{box-sizing:border-box}
+html{scroll-padding-top:118px}
+body{margin:0;font-family:'Nunito Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;background:var(--bg);color:#1d2a33;font-size:16px;-webkit-text-size-adjust:100%}
+button{font-family:inherit}
+.hidden{display:none!important}
+.top{position:sticky;top:0;z-index:20;background:var(--blue);color:#fff;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;display:flex;align-items:center;gap:10px}
+.top .brand{font-weight:800;font-size:1.05rem;letter-spacing:.2px;white-space:nowrap}
+.top .brand small{display:block;font-weight:600;font-size:.72rem;color:#9fe3d1;letter-spacing:.3px}
+.top .title{flex:1;min-width:0;font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .status{font-size:.75rem;color:#bfe9de;white-space:nowrap}
+.top .status.err{color:#ffb4a8;font-weight:700}
+.top .back{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.9rem;cursor:pointer}
+.progbar{height:4px;background:#d3dde3}
+.progbar>div{height:100%;width:0;background:var(--teal);transition:width .3s}
+.secnav{position:sticky;top:54px;z-index:15;background:#fff;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scrollbar-width:none}
+.secnav::-webkit-scrollbar{display:none}
+.navchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;text-decoration:none;color:var(--blue);background:#f4f7f9;border:1.5px solid var(--line);border-radius:18px;padding:6px 10px;font-size:.82rem;font-weight:700;white-space:nowrap}
+.navchip .nr{background:var(--blue);color:#fff;border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem}
+.navchip .prog{font-weight:600;color:var(--grey);font-size:.72rem}
+.navchip.started{border-color:#9fd9c9}
+.navchip.done{border-color:var(--teal);background:var(--tealbg)}
+.navchip.done .nr{background:var(--teal)}
+.navchip.active{box-shadow:0 0 0 2px var(--blue) inset}
+main{max-width:1000px;margin:0 auto;padding:10px 10px 120px}
+.card{background:#fff;border-radius:14px;padding:16px 16px 18px;margin:12px 0;box-shadow:0 1px 3px rgba(2,70,101,.08)}
+.card h2{margin:0 0 4px;color:var(--blue);font-size:1.15rem;display:flex;align-items:center;gap:10px}
+.card h2 .nr{background:var(--teal);color:#fff;border-radius:8px;min-width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;font-size:.9rem}
+.intro{color:var(--grey);font-size:.88rem;margin:2px 0 6px}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 16px;margin-top:12px}
+.field.wide{grid-column:1/-1}
+.lbl{display:block;font-weight:700;font-size:.86rem;color:var(--blue);margin-bottom:5px}
+input[type=text],input[type=date],input[type=time],textarea{width:100%;font:inherit;font-size:16px;padding:10px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fbfcfd;color:#1d2a33}
+input:focus,textarea:focus{outline:none;border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(0,171,132,.15)}
+textarea{resize:vertical;min-height:70px}
+.numwrap{display:flex;align-items:stretch}
+.numwrap input{border-top-right-radius:0;border-bottom-right-radius:0}
+.numwrap .unit{display:flex;align-items:center;padding:0 10px;background:#eef3f5;border:1.5px solid var(--line);border-left:0;border-radius:0 9px 9px 0;color:var(--grey);font-size:.85rem;white-space:nowrap}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1.5px solid var(--line);background:#fff;color:#1d2a33;border-radius:20px;padding:8px 13px;font-size:.9rem;cursor:pointer;line-height:1.2;-webkit-tap-highlight-color:transparent}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:700}
+.chips.small .chip{padding:6px 10px;font-size:.82rem}
+input.other{margin-top:8px}
+.help{font-size:.78rem;color:var(--grey);margin-top:5px}
+.hint{background:var(--tealbg);border-left:4px solid var(--teal);border-radius:8px;padding:9px 12px;font-size:.86rem;color:#1f4a45}
+.hint.warn{background:#fdf1ee;border-left-color:var(--danger);color:#6b2a20}
+.rephead{display:flex;justify-content:space-between;align-items:center}
+.repitem{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;background:#f8fafb}
+.repitemhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.reptitle{font-weight:800;color:var(--blue)}
+.repitem .fields{margin-top:8px}
+.docrow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;padding:8px 0;border-bottom:1px solid #edf1f3}
+.docl{font-size:.92rem;flex:1 1 220px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:8px}
+.thumbs:empty{display:none}
+.thumbs figure{margin:0;position:relative;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.thumbs img{width:100%;height:110px;object-fit:cover;display:block;cursor:zoom-in}
+.thumbs input{border:0;border-top:1px solid var(--line);border-radius:0;font-size:14px;padding:6px 8px}
+.thumbs .del{position:absolute;top:5px;right:5px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+.photobtns{display:flex;gap:8px;flex-wrap:wrap}
+.thumbs img.sk{object-fit:contain;background:#fff;cursor:pointer}
+.sktag{display:block;font-size:.7rem;color:var(--teal);font-weight:700;padding:3px 8px 0}
+/* Skizzen-Editor */
+#sketch{position:fixed;inset:0;z-index:60;background:#dfe6ea;display:flex;flex-direction:column;touch-action:none;-webkit-user-select:none;user-select:none}
+#sketch .skbar{background:var(--blue);color:#fff;display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:calc(6px + env(safe-area-inset-top)) 10px 6px}
+#sketch .skbar .grp{display:flex;gap:4px;align-items:center;background:rgba(255,255,255,.1);border-radius:10px;padding:3px}
+#sketch .skbar button{border:0;background:transparent;color:#fff;font:inherit;font-weight:700;font-size:.9rem;padding:8px 10px;border-radius:8px;cursor:pointer;min-width:40px}
+#sketch .skbar button.on{background:#fff;color:var(--blue)}
+#sketch .skbar .sp{flex:1}
+#sketch .skbar .save{background:var(--teal)}
+#sketch .dot{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle;border:2px solid #fff}
+#sketch .skarea{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px}
+#sketch canvas{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.2);touch-action:none}
+#sketch .skhint{font-size:.72rem;color:#bfe9de;padding:0 4px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:11px 16px;font-weight:700;font-size:.95rem;cursor:pointer;background:var(--teal);color:#fff;text-decoration:none}
+.btn-sm{padding:8px 12px;font-size:.85rem}
+.btn-ghost{background:#fff;color:var(--blue);border:1.5px solid var(--line)}
+.btn-blue{background:var(--blue)}
+.btn-add{background:#fff;color:var(--teal);border:2px dashed var(--teal);width:100%;justify-content:center;margin-top:4px}
+.danger{color:var(--danger)!important}
+label.btn input{display:none}
+.home-hero{background:#fff;border-radius:14px;padding:18px;margin:14px 0;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.home-hero img{height:64px}
+.home-hero h1{margin:0;color:var(--blue);font-size:1.3rem}
+.home-hero p{margin:4px 0 0;color:var(--grey);font-size:.9rem}
+.home-actions{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
+.bogencard{background:#fff;border-radius:12px;padding:12px 14px;margin:10px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(2,70,101,.08)}
+.bc-main{flex:1 1 240px;cursor:pointer}
+.bc-title{font-weight:800;color:var(--blue)}
+.bc-date{font-size:.8rem;color:var(--grey)}
+.bc-actions{display:flex;gap:6px}
+.empty{color:var(--grey);background:#fff;padding:16px;border-radius:12px}
+.small-info{font-size:.78rem;color:var(--grey);margin-top:16px}
+#zoom{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:50;display:flex;align-items:center;justify-content:center;padding:10px}
+#zoom img{max-width:100%;max-height:100%;object-fit:contain}
+.bottombar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:18}
+#print{display:none}
+@media (max-width:560px){.top .brand small{display:none}.secnav{top:52px}.card{padding:14px 12px}}
+@media print{
+  @page{size:A4;margin:12mm 14mm 14mm}
+  body{background:#fff}
+  #app{display:none!important}
+  #print{display:block;font:9.5pt/1.35 'Nunito Sans',Arial,sans-serif;color:#1d2a33}
+  .phead{display:flex;justify-content:space-between;align-items:center;border-bottom:.75pt solid #D9DDE0;padding-bottom:5pt;margin-bottom:10pt;position:relative}
+  .phead img{width:34mm}
+  .phead::after{content:"";position:absolute;left:0;bottom:-1pt;width:34mm;border-bottom:1.5pt solid #00AB84}
+  .pclaimbox{border-left:2pt solid #00AB84;padding-left:6pt;font-size:7.5pt;color:#6B7680}
+  .pclaim{color:#024665;font-weight:800;letter-spacing:.3pt;font-size:8pt}
+  h1{font-size:15pt;color:#024665;margin:0 0 2pt}
+  .psub{color:#6B7680;margin-bottom:6pt}
+  h2{font-size:11pt;color:#024665;border-left:3pt solid #00AB84;padding-left:5pt;margin:11pt 0 4pt;break-after:avoid}
+  h3{font-size:9.8pt;color:#024665;margin:7pt 0 2pt;break-after:avoid}
+  table{width:100%;border-collapse:collapse;margin-bottom:3pt}
+  th,td{border-bottom:.5pt solid #D9DDE0;padding:2.5pt 4pt;vertical-align:top;text-align:left}
+  th{width:36%;font-weight:700;color:#024665}
+  tr{break-inside:avoid}
+  .blank{display:block;border-bottom:.5pt solid #999;height:13pt}
+  .opts{font-size:8.5pt;line-height:1.6}
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5pt;margin:4pt 0}
+  .pgrid figure{margin:0;break-inside:avoid}
+  .pgrid img{width:100%;height:44mm;object-fit:cover;border:.5pt solid #ccc}
+  .pgrid figure.sk{grid-column:span 2}
+  .pgrid figure.sk img{height:auto;max-height:110mm;object-fit:contain;background:#fff}
+  figcaption{font-size:7.5pt;color:#6B7680}
+  .pfoot{margin-top:12pt;border-top:.75pt solid #00AB84;padding-top:4pt;font-size:7pt;color:#6B7680}
+  .pnote{font-size:8pt;color:#6B7680;margin:2pt 0 6pt}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="home">
+    <div class="top"><div class="brand">Ingenieurbüro Kaufmann<small>TGA-Planung · Energieberatung · Wärmekonzepte</small></div><div class="title"></div></div>
+    <main>
+      <div class="home-hero">
+        <img src="logo.jpg" alt="Ingenieurbüro Kaufmann">
+        <div><h1>Aufnahmebogen Ortstermin iSFP</h1><p>Bestandsaufnahme für Sanierungsfahrplan, Heizlast und BEG EM. Speichert automatisch auf diesem Gerät und funktioniert auch offline.</p></div>
+      </div>
+      <div class="home-actions">
+        <button class="btn" id="btnNew">+ Neuer Aufnahmebogen</button>
+        <label class="btn btn-ghost">JSON importieren<input type="file" accept="application/json,.json" id="impFile"></label>
+        <button class="btn btn-ghost" id="btnBlank">Leeren Bogen drucken</button>
+      </div>
+      <div id="bogenlist"></div>
+      <div class="small-info" id="storinfo"></div>
+    </main>
+  </div>
+
+  <div id="editor" class="hidden">
+    <div class="top"><button class="back" id="btnBack">‹ Übersicht</button><div class="title" id="bogenTitle"></div><div class="status" id="status"></div></div>
+    <nav class="secnav" id="secnav"></nav>
+    <div class="progbar"><div id="totalprog"></div></div>
+    <main><div id="sections"></div></main>
+    <div class="bottombar">
+      <button class="btn btn-blue btn-sm" id="btnExport">⬇ Export (JSON)</button>
+      <button class="btn btn-sm" id="btnPrint">🖨 Bericht / PDF</button>
+      <button class="btn btn-ghost btn-sm" id="btnTop">▲ nach oben</button>
+    </div>
+  </div>
+
+  <div id="zoom" class="hidden"><img alt=""></div>
+</div>
+<div id="print"></div>
+
+<script>
+'use strict';
+/* ===== Büro-Angaben (Druckkopf/-fuß) ===== */
+const OFFICE={claim:'TGA-PLANUNG · ENERGIEBERATUNG · WÄRMEKONZEPTE',adr:'Ringstraße 10A · 97903 Collenberg',tel:'Tel. 0162 / 72 22 043',web:'www.ing-kaufmann.de'};
+
+/* ===== Schema ===== */
+const T=(id,label,o={})=>({id,label,type:'text',...o});
+const N=(id,label,unit,o={})=>({id,label,type:'num',unit,...o});
+const C=(id,label,options,o={})=>({id,label,type:'chips',options,...o});
+const M=(id,label,options,o={})=>({id,label,type:'multi',options,...o});
+const A=(id,label,o={})=>({id,label,type:'area',...o});
+const P=(label='Fotos & Skizzen',id='foto')=>({id,label,type:'photos'});
+const R=(id,label,item,fields,o={})=>({id,label,type:'repeat',item,fields,...o});
+const H=(text,warn)=>({type:'hint',text,warn});
+const YN=(id,label)=>C(id,label,['ja','nein','unklar']);
+const ZUST=()=>C('zustand','Zustand',['gut','mittel','schlecht']);
+const NOTIZ=(label='Notizen')=>A('notiz',label);
+const DOCSTATES=['liegt vor','nachreichen','nicht vorhanden'];
+
+const S=[
+ {id:'termin',title:'Termin & Beteiligte',fields:[
+  T('projektnr','Projekt-Nr.'),
+  {id:'datum',label:'Datum',type:'date'},
+  T('eigentuemer','Eigentümer / Auftraggeber'),
+  T('tel','Telefon'),
+  T('mail','E-Mail'),
+  T('adresse','Objektadresse',{wide:true}),
+  T('anwesend','Anwesende',{wide:true}),
+  C('nutzung','Nutzung derzeit',['selbstgenutzt','vermietet','teilweise vermietet','leerstehend'])
+ ]},
+ {id:'gebaeude',title:'Gebäude allgemein',fields:[
+  C('typ','Gebäudetyp',['EFH','ZFH','DHH','REH','RMH','MFH','Nichtwohngebäude']),
+  C('lage','Lage',['freistehend','einseitig angebaut','zweiseitig angebaut']),
+  N('baujahr','Baujahr'),
+  T('anbau','Anbauten / Erweiterungen (Bj.)'),
+  N('we','Wohneinheiten'),
+  C('keller','Keller',['kein Keller','unbeheizt','teilbeheizt','beheizt']),
+  C('dg','Dachgeschoss',['ausgebaut','teilweise ausgebaut','nicht ausgebaut','Flachdach']),
+  C('dachform','Dachform',['Satteldach','Walmdach','Pultdach','Flachdach','Mansarddach','Zeltdach'],{other:true}),
+  N('dachneigung','Dachneigung','°'),
+  C('bauweise','Bauweise',['massiv','Holzständer','Fertighaus','Fachwerk','Mischbauweise']),
+  YN('denkmal','Denkmalschutz / Ensemble'),
+  N('personen','Personen im Haushalt (künftig)'),
+  P('Fotos & Skizzen (Ansichten, Grundriss, Umgebung)')
+ ]},
+ {id:'wand',title:'Außenwände',intro:'Je Wandtyp eine Karte anlegen (z. B. EG massiv, Giebel DG, Anbau). Wandstärke an Fenster- oder Türlaibung messen.',fields:[
+  R('waende','Wandtypen','Außenwand',[
+   T('bez','Bezeichnung / Lage',{ph:'z. B. AW EG, Giebel Nord'}),
+   C('material','Material',['Vollziegel','Hochlochziegel','Bims / Leichtbeton','Kalksandstein','Beton','Porenbeton','Fachwerk','Holz'],{other:true}),
+   N('dicke','Wandstärke gesamt','cm'),
+   C('daemmung','Dämmung',['keine','WDVS','Innendämmung','Kerndämmung','Vorhangfassade']),
+   T('daemm_mat','Dämmstoff'),
+   N('daemm_d','Dämmstärke','cm'),
+   T('oberflaeche','Außenoberfläche',{ph:'Putz, Klinker, Verkleidung …'}),
+   T('sanierung','Sanierung (Jahr)'),
+   ZUST(),
+   NOTIZ(),
+   P()
+  ],{blank:2})
+ ]},
+ {id:'dach',title:'Dach / oberste Geschossdecke',fields:[
+  R('daecher','Bauteile','Dachbauteil',[
+   C('art','Bauteil',['Steildach','Oberste Geschossdecke','Kehlbalkenlage','Abseitenwand','Drempel / Kniestock','Gaube','Flachdach']),
+   C('konstr','Konstruktion',['Sparren','Holzbalken','Stahlbeton','Hohldielen'],{other:true}),
+   N('sparren_h','Sparren-/Balkenhöhe','cm'),
+   N('sparren_a','Sparren-/Balkenabstand','cm'),
+   C('lage_d','Lage Dämmung',['keine','zwischen','auf','unter','zwischen + unter']),
+   T('daemm_mat','Dämmstoff'),
+   N('daemm_d','Dämmstärke','cm'),
+   T('eindeckung','Eindeckung / Belag'),
+   YN('unterspann','Unterspannbahn / Unterdach'),
+   YN('dampfbremse','Dampfbremse / Luftdichtheitsebene'),
+   T('sanierung','Sanierung (Jahr)'),
+   ZUST(),
+   NOTIZ(),
+   P()
+  ],{blank:2}),
+  C('spitzboden','Spitzboden',['begehbar','nicht begehbar','kein Spitzboden']),
+  T('zugang','Zugang Dachraum (Luke, Treppe)')
+ ]},
+ {id:'boden',title:'Kellerdecke / Bodenplatte',fields:[
+  R('boeden','Bauteile','Bodenbauteil',[
+   C('art','Bauteil',['Kellerdecke','Bodenplatte gegen Erdreich','Decke gegen Außenluft','Kellerwand gegen Erdreich','Decke zu unbeheiztem Raum']),
+   C('konstr','Konstruktion',['Stahlbeton','Ziegeleinhängedecke','Holzbalken','Kappendecke'],{other:true}),
+   N('dicke','Stärke Rohdecke','cm'),
+   C('lage_d','Lage Dämmung',['keine','oberseitig (Estrich)','unterseitig']),
+   T('daemm_mat','Dämmstoff'),
+   N('daemm_d','Dämmstärke','cm'),
+   T('aufbau','Fußbodenaufbau oben'),
+   N('h_keller','Lichte Höhe Keller','m',{help:'Wichtig für eine mögliche Kellerdeckendämmung'}),
+   T('hindernisse','Leitungen / Hindernisse unter der Decke'),
+   ZUST(),
+   NOTIZ(),
+   P()
+  ],{blank:1})
+ ]},
+ {id:'fenster',title:'Fenster & Türen',intro:'Gleiche Fenster gruppieren (Ausrichtung, Typ). Baujahr steht oft im Glas-Abstandhalter.',fields:[
+  R('fenster','Fenstergruppen','Fenstergruppe',[
+   T('lage','Lage / Räume'),
+   N('anzahl','Anzahl','Stk'),
+   C('rahmen','Rahmen',['Holz','Kunststoff','Alu','Holz-Alu','Stahl']),
+   C('verglasung','Verglasung',['Einfach','Isolier 2-fach (alt)','Wärmeschutz 2-fach','3-fach']),
+   T('baujahr','Baujahr (Abstandhalter)'),
+   C('rollladen','Sonnenschutz',['keiner','Rollladen, Kasten innen','Vorbaukasten außen','Raffstore','Klappläden']),
+   YN('kasten_d','Rollladenkasten gedämmt'),
+   C('dicht','Dichtheit / Zustand',['gut','mittel','schlecht']),
+   NOTIZ(),
+   P()
+  ],{blank:4}),
+  A('tueren','Haustür / Nebentüren (Material, Verglasung, Maße, Baujahr)'),
+  P('Fotos Türen','foto_tuer')
+ ]},
+ {id:'heizung',title:'Heizung',fields:[
+  C('erzeuger','Wärmeerzeuger',['Gas-Brennwert','Gas-NT / Konstanttemp.','Öl-Brennwert','Öl-NT / Konstanttemp.','Nachtspeicher','Wärmepumpe','Pellet / Holzkessel','Fernwärme','Einzelöfen'],{other:true}),
+  T('hersteller','Hersteller / Typ'),
+  N('baujahr','Baujahr'),
+  N('leistung','Nennleistung','kW'),
+  C('aufstell','Aufstellort',['Keller','HWR','Dachgeschoss','Wohnraum','außen']),
+  N('nsp_anzahl','Anzahl Nachtspeicheröfen','Stk'),
+  T('nsp_bj','Nachtspeicher: Hersteller / Baujahr'),
+  N('nsp_kw','Nachtspeicher: Anschlussleistung gesamt','kW'),
+  C('nsp_asbest','Asbestverdacht Nachtspeicher',['ja (vor ca. 1984)','nein','unklar']),
+  H('Nachtspeicheröfen vor ca. 1984 können Asbest enthalten → Typenschild fotografieren, Hinweis zur fachgerechten Entsorgung aufnehmen.',true),
+  T('tank','Öltank / Gasanschluss (Volumen, Lage)'),
+  C('schornstein','Schornstein / Abgas',['keiner','gemauert','Edelstahl','Kunststoff-Abgasleitung']),
+  C('verteilung','Verteilung',['Zweirohr','Einrohr','keine (Einzelgeräte)']),
+  C('rohr_d','Rohrleitungen unbeheizt',['gedämmt','teilweise','ungedämmt']),
+  M('uebergabe','Wärmeübergabe',['Heizkörper','Fußbodenheizung','Wandheizung','Einzelöfen','Konvektoren']),
+  C('thermostat','Thermostatventile',['vorhanden','teilweise','keine']),
+  C('pumpe','Umwälzpumpe',['Hocheffizienz','ungeregelt','unbekannt']),
+  NOTIZ(),
+  P('Fotos Erzeuger, Typenschilder, Verteilung')
+ ]},
+ {id:'ww',title:'Warmwasser',fields:[
+  C('art','Warmwasserbereitung',['zentral über Heizung','zentral elektrisch','Durchlauferhitzer','Kleinspeicher / Boiler','WP-Boiler','Solarthermie-Unterstützung'],{other:true}),
+  C('zirk','Zirkulation',['keine','mit Zeitsteuerung','dauerhaft']),
+  NOTIZ(),
+  P()
+ ]},
+ {id:'lueftung',title:'Lüftung & Kühlung',fields:[
+  C('art','Lüftung',['Fensterlüftung','Abluftanlage','zentral mit WRG','dezentral mit WRG','Bad-/WC-Ventilatoren']),
+  C('kuehlung','Kühlung',['keine','Split-Klima','mobile Geräte']),
+  YN('feuerstaette','Raumluftabhängige Feuerstätte (Kaminofen)'),
+  NOTIZ(),
+  P()
+ ]},
+ {id:'elektro',title:'Elektro, PV & Erneuerbare',fields:[
+  C('imsys','Smart Meter (iMSys)',['vorhanden','nicht vorhanden','unbekannt']),
+  C('pv','Photovoltaik',['keine','vorhanden','geplant']),
+  N('pv_kwp','PV-Leistung','kWp'),
+  C('speicher','Batteriespeicher',['kein','vorhanden','geplant']),
+  C('solarthermie','Solarthermie',['keine','Warmwasser','WW + Heizung']),
+  NOTIZ(),
+  P('Fotos Zählerschrank, Hausanschluss')
+ ]},
+ {id:'verbrauch',title:'Energieverbrauch',fields:[
+  H('Verbrauchsangaben nur vom Eigentümer (ohne Abrechnung/Tankbelege) reichen der KfW nicht – für BzA/BnD den Endenergiebedarf über die Heizlast rechnen. Abrechnungen der letzten 3 Jahre anfordern.'),
+  R('jahre','Verbrauchswerte','Verbrauchsjahr',[
+   T('jahr','Jahr / Zeitraum'),
+   C('traeger','Energieträger',['Strom HT','Strom NT / Heizstrom','Erdgas','Heizöl','Pellets','Scheitholz','Fernwärme','Flüssiggas']),
+   N('menge','Menge'),
+   C('einheit','Einheit',['kWh','l','m³','t','rm']),
+   N('kosten','Kosten','€'),
+   C('quelle','Quelle',['Abrechnung','Tankbeleg','Angabe Eigentümer'])
+  ],{blank:3}),
+  A('zaehlerstaende','Zählerstände heute'),
+  P('Fotos Zähler')
+ ]},
+ {id:'wuensche',title:'Kundenwünsche & Planung',fields:[
+  M('massnahmen','Geplante Maßnahmen',['Dach','Oberste Geschossdecke','Fassade','Fenster','Haustür','Kellerdecke','Heizung','Lüftung','Warmwasser','PV','Batteriespeicher','Bad / Sanitär','Grundriss','Elektro']),
+  A('prio','Prioritäten / Reihenfolge'),
+  A('zeitplan','Zeitplan (Planung, Ausführung, Einzug)'),
+  NOTIZ()
+ ]},
+ {id:'unterlagen',title:'Unterlagen & Abschluss',fields:[
+  {id:'docs',label:'Unterlagen',type:'doclist',items:['Grundrisse / Schnitte / Ansichten','Baugenehmigung / Baubeschreibung','Wohnflächenberechnung','Energieausweis','Verbrauchsabrechnungen (3 Jahre)','Schornsteinfegerprotokoll','Unterlagen Heizung / Typenschild','Rechnungen frühere Sanierungen','Eigentumsnachweis (Grundbuch)','Unterlagen BAFA-Antrag Energieberatung']},
+  A('naechste','Nächste Schritte / Vereinbarungen'),
+  P('Freie Skizzen / handschriftliche Notizen','skizzen'),
+  NOTIZ('Sonstiges')
+ ]}
+];
+
+/* ===== Helpers ===== */
+const $=(s,r=document)=>r.querySelector(s);
+function h(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k.startsWith('on')&&typeof v==='function')e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?'':v);}for(const k of kids.flat()){if(k==null||k===false)continue;e.append(k.nodeType?k:document.createTextNode(k));}return e;}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const filled=v=>v!=null&&v!==''&&!(Array.isArray(v)&&!v.length)&&!(typeof v==='object'&&!Array.isArray(v)&&!Object.keys(v).length);
+const deDate=v=>{const d=new Date(v+'T00:00');return isNaN(d)?v:d.toLocaleDateString('de-DE')};
+
+/* ===== IndexedDB (Fotos) ===== */
+let dbp;
+function db(){return dbp||(dbp=new Promise((res,rej)=>{const r=indexedDB.open('ik-isfp-aufnahme',1);r.onupgradeneeded=()=>{const s=r.result.createObjectStore('photos',{keyPath:'id'});s.createIndex('bogen','bogen');};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}));}
+async function idbPut(p){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('photos','readwrite');t.objectStore('photos').put(p);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function idbDel(id){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('photos','readwrite');t.objectStore('photos').delete(id);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function idbByBogen(b){const d=await db();return new Promise((res,rej)=>{const r=d.transaction('photos').objectStore('photos').index('bogen').getAll(b);r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+function downscale(file,max=1600,q=.78){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{let w=img.naturalWidth,hh=img.naturalHeight;const s=Math.min(1,max/Math.max(w,hh));w=Math.round(w*s);hh=Math.round(hh*s);const c=document.createElement('canvas');c.width=w;c.height=hh;c.getContext('2d').drawImage(img,0,0,w,hh);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',q));};img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bildformat nicht lesbar'));};img.src=url;});}
+
+/* ===== localStorage (Formulardaten) ===== */
+const LS_INDEX='ik_isfp_index',LS_B='ik_isfp_b_';
+const loadIndex=()=>{try{return JSON.parse(localStorage.getItem(LS_INDEX))||[]}catch{return[]}};
+const saveIndex=ix=>localStorage.setItem(LS_INDEX,JSON.stringify(ix));
+const loadBogen=id=>{try{return JSON.parse(localStorage.getItem(LS_B+id))}catch{return null}};
+const titleOf=b=>{const v=b.v||{};return [v['termin.projektnr'],v['termin.eigentuemer'],v['termin.adresse']].filter(Boolean).join(' · ')||'Neuer Aufnahmebogen'};
+
+let cur=null,photos=[],saveT=null;
+function setStatus(t,err){const s=$('#status');s.textContent=t;s.classList.toggle('err',!!err);}
+function save(){clearTimeout(saveT);setStatus('speichert …');saveT=setTimeout(saveNow,350);}
+function saveNow(){clearTimeout(saveT);saveT=null;if(!cur)return;cur.updated=new Date().toISOString();try{localStorage.setItem(LS_B+cur.id,JSON.stringify(cur));const ix=loadIndex().filter(x=>x.id!==cur.id);ix.unshift({id:cur.id,title:titleOf(cur),updated:cur.updated});saveIndex(ix);setStatus('✓ gespeichert '+new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}));}catch(e){setStatus('Speichern fehlgeschlagen!',true);}$('#bogenTitle').textContent=titleOf(cur);updateProgress();}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&saveT)saveNow();});
+window.addEventListener('pagehide',()=>{if(saveT)saveNow();});
+
+/* ===== Rendering ===== */
+const WIDE=new Set(['chips','multi','area','photos','repeat','doclist','hint']);
+function show(id){['home','editor'].forEach(x=>$('#'+x).classList.toggle('hidden',x!==id));}
+
+function renderField(f,ctx){
+ if(f.type==='hint')return h('div',{class:'hint wide'+(f.warn?' warn':'')},f.text);
+ const wrap=h('div',{class:'field'+(WIDE.has(f.type)||f.wide?' wide':'')});
+ if(f.type!=='repeat')wrap.append(h('label',{class:'lbl'},f.label));
+ const val=ctx.get(f.id);
+ switch(f.type){
+  case 'text':case 'date':case 'time':{const i=h('input',{type:f.type,placeholder:f.ph||null});i.value=val??'';i.addEventListener('input',()=>ctx.set(f.id,i.value.trim()?i.value:''));wrap.append(i);break;}
+  case 'num':{const i=h('input',{type:'text',inputmode:'decimal',placeholder:f.ph||null});i.value=val??'';i.addEventListener('input',()=>ctx.set(f.id,i.value.trim()));wrap.append(h('div',{class:'numwrap'},i,f.unit?h('span',{class:'unit'},f.unit):null));break;}
+  case 'area':{const t=h('textarea',{rows:f.rows||3,placeholder:f.ph||null});t.value=val??'';t.addEventListener('input',()=>ctx.set(f.id,t.value.trim()?t.value:''));wrap.append(t);break;}
+  case 'chips':case 'multi':{
+   const multi=f.type==='multi',box=h('div',{class:'chips'}),now=()=>ctx.get(f.id);
+   const isOn=o=>multi?(now()||[]).includes(o):now()===o;
+   const btns=f.options.map(o=>{const b=h('button',{type:'button',class:'chip'+(isOn(o)?' on':'')},o);b.addEventListener('click',()=>{if(multi){const a=now()||[];ctx.set(f.id,a.includes(o)?a.filter(x=>x!==o):[...a,o]);}else ctx.set(f.id,now()===o?'':o);btns.forEach((bb,j)=>bb.classList.toggle('on',isOn(f.options[j])));});return b;});
+   box.append(...btns);wrap.append(box);
+   if(f.other){const i=h('input',{type:'text',class:'other',placeholder:'Sonstiges / Ergänzung'});i.value=ctx.get(f.id+'_txt')??'';i.addEventListener('input',()=>ctx.set(f.id+'_txt',i.value.trim()?i.value:''));wrap.append(i);}
+   break;}
+  case 'doclist':{
+   const v={...(val||{})},list=h('div');
+   f.items.forEach(it=>{const box=h('div',{class:'chips small'});const btns=DOCSTATES.map(o=>{const b=h('button',{type:'button',class:'chip'+(v[it]===o?' on':'')},o);b.addEventListener('click',()=>{if(v[it]===o)delete v[it];else v[it]=o;ctx.set(f.id,Object.keys(v).length?{...v}:'');btns.forEach(bb=>bb.classList.toggle('on',bb.textContent===v[it]));});return b;});box.append(...btns);list.append(h('div',{class:'docrow'},h('span',{class:'docl'},it),box));});
+   wrap.append(list);break;}
+  case 'photos':wrap.append(photoWidget(ctx.slot(f.id)));break;
+  case 'repeat':wrap.append(repeatWidget(f,ctx));break;
+ }
+ if(f.help)wrap.append(h('div',{class:'help'},f.help));
+ return wrap;
+}
+
+function photoWidget(slot){
+ const thumbs=h('div',{class:'thumbs'});
+ const draw=()=>{thumbs.innerHTML='';photos.filter(p=>p.slot===slot).sort((a,b)=>a.ts-b.ts).forEach(p=>{
+  const cap=h('input',{type:'text',placeholder:'Beschriftung'});cap.value=p.caption||'';
+  cap.addEventListener('change',()=>{p.caption=cap.value;idbPut(p);});
+  const del=h('button',{type:'button',class:'del',title:'Foto löschen'},'×');
+  del.addEventListener('click',async()=>{if(!confirm('Foto löschen?'))return;await idbDel(p.id);photos=photos.filter(x=>x.id!==p.id);draw();updateProgress();});
+  const img=h('img',{src:p.data,alt:p.caption||'Foto',class:p.kind==='sketch'?'sk':null});
+  img.addEventListener('click',()=>p.kind==='sketch'?openSketch(p.data,async data=>{p.data=data;await idbPut(p);draw();save();}):zoom(p.data));
+  const fig=h('figure',null,img,del,cap);
+  if(p.kind==='sketch')fig.append(h('span',{class:'sktag'},'✏️ Skizze – antippen zum Bearbeiten'));
+  thumbs.append(fig);});};
+ const skBtn=h('button',{type:'button',class:'btn btn-ghost btn-sm'},'✏️ Skizze');
+ skBtn.addEventListener('click',()=>openSketch(null,async data=>{const p={id:uid(),bogen:cur.id,slot,caption:'',data,kind:'sketch',ts:Date.now()};await idbPut(p);photos.push(p);draw();save();}));
+ const mk=(label,cam)=>{const inp=h('input',{type:'file',accept:'image/*',multiple:cam?null:true,capture:cam?'environment':null});
+  inp.addEventListener('change',async()=>{const files=[...inp.files];inp.value='';for(const fl of files){try{const data=await downscale(fl);const p={id:uid(),bogen:cur.id,slot,caption:'',data,ts:Date.now()};await idbPut(p);photos.push(p);draw();}catch(e){alert('Foto konnte nicht gespeichert werden: '+e.message);}}save();});
+  return h('label',{class:'btn btn-ghost btn-sm'},label,inp);};
+ draw();
+ return h('div',{class:'photos'},thumbs,h('div',{class:'photobtns'},mk('📷 Kamera',true),mk('🖼 Galerie / Dateien',false),skBtn));
+}
+
+function repeatWidget(f,ctx){
+ const list=h('div'),arr=()=>ctx.get(f.id)||[],commit=a=>ctx.set(f.id,a);
+ const draw=()=>{list.innerHTML='';arr().forEach((item,i)=>{
+  const ictx={get:id=>item[id],set:(id,v)=>{if(!filled(v))delete item[id];else item[id]=v;commit(arr());},slot:id=>ctx.slot(f.id)+'.'+item._uid+'.'+id};
+  const dup=h('button',{type:'button',class:'btn btn-ghost btn-sm'},'Duplizieren');
+  dup.addEventListener('click',()=>{const c=JSON.parse(JSON.stringify(item));c._uid=uid();const a=arr();a.splice(i+1,0,c);commit(a);draw();list.children[i+1]?.scrollIntoView({behavior:'smooth',block:'start'});});
+  const del=h('button',{type:'button',class:'btn btn-ghost btn-sm danger'},'Löschen');
+  del.addEventListener('click',async()=>{if(!confirm(`${f.item} ${i+1} inkl. Fotos löschen?`))return;const pre=ctx.slot(f.id)+'.'+item._uid+'.';for(const p of photos.filter(p=>p.slot.startsWith(pre)))await idbDel(p.id);photos=photos.filter(p=>!p.slot.startsWith(pre));const a=arr();a.splice(i,1);commit(a);draw();});
+  const sub=item.bez||item.lage||item.art||item.jahr||'';
+  list.append(h('div',{class:'repitem'},h('div',{class:'repitemhead'},h('span',{class:'reptitle'},`${f.item} ${i+1}`+(sub?' – '+sub:'')),h('div',{class:'chips'},dup,del)),h('div',{class:'fields'},f.fields.map(ff=>renderField(ff,ictx)))));
+ });};
+ const add=h('button',{type:'button',class:'btn btn-add'},'+ '+f.item+' hinzufügen');
+ add.addEventListener('click',()=>{const a=arr();a.push({_uid:uid()});commit(a);draw();list.lastElementChild?.scrollIntoView({behavior:'smooth',block:'start'});});
+ draw();
+ return h('div',{class:'repeat'},h('div',{class:'rephead'},h('span',{class:'lbl'},f.label)),list,add);
+}
+
+function secCtx(b,sec){return{get:id=>b.v[sec.id+'.'+id],set:(id,v)=>{if(!filled(v))delete b.v[sec.id+'.'+id];else b.v[sec.id+'.'+id]=v;save();},slot:id=>sec.id+'.'+id};}
+
+let spy=null;
+function renderEditor(){
+ show('editor');$('#bogenTitle').textContent=titleOf(cur);setStatus('');
+ const nav=$('#secnav'),wrap=$('#sections');nav.innerHTML='';wrap.innerHTML='';
+ S.forEach((sec,i)=>{
+  nav.append(h('a',{href:'#s-'+sec.id,class:'navchip','data-sec':sec.id},h('span',{class:'nr'},String(i+1)),sec.title,h('span',{class:'prog'})));
+  const ctx=secCtx(cur,sec);
+  wrap.append(h('section',{class:'card',id:'s-'+sec.id,'data-sec':sec.id},h('h2',null,h('span',{class:'nr'},String(i+1)),sec.title),sec.intro?h('p',{class:'intro'},sec.intro):null,h('div',{class:'fields'},sec.fields.map(f=>renderField(f,ctx)))));
+ });
+ updateProgress();window.scrollTo(0,0);
+ if(spy)spy.disconnect();
+ if('IntersectionObserver'in window){spy=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){const id=e.target.dataset.sec;document.querySelectorAll('.navchip').forEach(c=>c.classList.toggle('active',c.dataset.sec===id));const c=$(`.navchip[data-sec="${id}"]`);c&&c.scrollIntoView({inline:'center',block:'nearest'});}});},{rootMargin:'-120px 0px -65% 0px'});document.querySelectorAll('#sections section').forEach(s=>spy.observe(s));}
+}
+
+function secProgress(b,sec){let tot=0,ok=0;sec.fields.forEach(f=>{if(f.type==='hint')return;tot++;const key=sec.id+'.'+f.id;if(f.type==='photos'){if(photos.some(p=>p.slot===key))ok++;}else if(f.type==='repeat'){if((b.v[key]||[]).some(it=>Object.keys(it).some(k=>k!=='_uid')))ok++;}else if(filled(b.v[key]))ok++;});return[ok,tot];}
+function updateProgress(){if(!cur)return;let O=0,TT=0;S.forEach(sec=>{const[o,t]=secProgress(cur,sec);O+=o;TT+=t;const c=$(`.navchip[data-sec="${sec.id}"]`);if(c){c.querySelector('.prog').textContent=`${o}/${t}`;c.classList.toggle('done',o===t);c.classList.toggle('started',o>0&&o<t);}});$('#totalprog').style.width=(TT?Math.round(O/TT*100):0)+'%';}
+
+function zoom(src){const z=$('#zoom');z.querySelector('img').src=src;z.classList.remove('hidden');}
+$('#zoom').addEventListener('click',()=>$('#zoom').classList.add('hidden'));
+
+
+/* ===== Skizzen-Editor (Apple Pencil / Finger / Maus) ===== */
+function openSketch(bgData,onSave){
+ const W=1600,H=1200;
+ const cv=h('canvas',{width:W,height:H}),g=cv.getContext('2d');
+ let strokes=[],redo=[],curS=null,penSeen=false,grid=!bgData,bg=null;
+ let tool={color:'#1d2a33',size:4,erase:false};
+ const COLORS=[['#1d2a33','schwarz'],['#1f5fbf','blau'],['#c0392b','rot'],['#00AB84','grün']];
+ const SIZES=[[2,'fein'],[4,'mittel'],[8,'dick']];
+ const btn=(html,fn,cls)=>{const b=h('button',{type:'button',class:cls||null});b.innerHTML=html;b.addEventListener('click',fn);return b;};
+ const colorBtns=COLORS.map(([c,n])=>btn(`<span class="dot" style="background:${c}"></span>`,()=>{tool.color=c;tool.erase=false;sync();}));
+ colorBtns.forEach((b,i)=>b.title=COLORS[i][1]);
+ const sizeBtns=SIZES.map(([s,n])=>btn(n,()=>{tool.size=s;sync();}));
+ const eraseBtn=btn('Radierer',()=>{tool.erase=!tool.erase;sync();});
+ const gridBtn=btn('Raster',()=>{grid=!grid;sync();redraw();});
+ function sync(){colorBtns.forEach((b,i)=>b.classList.toggle('on',!tool.erase&&tool.color===COLORS[i][0]));sizeBtns.forEach((b,i)=>b.classList.toggle('on',tool.size===SIZES[i][0]));eraseBtn.classList.toggle('on',tool.erase);gridBtn.classList.toggle('on',grid);}
+ const close=()=>{ov.remove();document.body.style.overflow='';window.removeEventListener('resize',fit);};
+ const bar=h('div',{class:'skbar'},
+  h('div',{class:'grp'},colorBtns),h('div',{class:'grp'},sizeBtns),h('div',{class:'grp'},eraseBtn,gridBtn),
+  h('div',{class:'grp'},btn('↶',()=>{if(strokes.length){redo.push(strokes.pop());redraw();}}),btn('↷',()=>{if(redo.length){strokes.push(redo.pop());redraw();}}),btn('Leeren',()=>{if(strokes.length&&confirm('Alle Striche löschen?')){strokes=[];redo=[];redraw();}})),
+  h('span',{class:'skhint'},'Mit Pencil werden Finger ignoriert'),h('span',{class:'sp'}),
+  btn('Abbrechen',()=>{if(!strokes.length||confirm('Skizze verwerfen?'))close();}),
+  btn('✓ Übernehmen',()=>{const data=cv.toDataURL('image/png');close();onSave(data);},'save'));
+ const area=h('div',{class:'skarea'},cv);
+ const ov=h('div',{id:'sketch'},bar,area);
+ function fit(){const r=area.getBoundingClientRect(),aw=r.width-16,ah=r.height-16,s=Math.min(aw/W,ah/H);cv.style.width=Math.floor(W*s)+'px';cv.style.height=Math.floor(H*s)+'px';}
+ function drawGrid(){g.save();g.strokeStyle='#dbe6ec';g.lineWidth=1;for(let x=50;x<W;x+=50){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}for(let y=50;y<H;y+=50){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();}g.restore();}
+ function seg(st,a,b){g.strokeStyle=st.erase?'#fff':st.color;g.lineCap='round';g.lineJoin='round';const base=st.erase?st.size*5:st.size;g.lineWidth=base*(0.55+0.9*((a[2]+b[2])/2));g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+ function drawStroke(st){const p=st.pts;if(p.length===1){seg(st,p[0],[p[0][0]+.1,p[0][1]+.1,p[0][2]]);return;}for(let i=1;i<p.length;i++)seg(st,p[i-1],p[i]);}
+ function redraw(){g.fillStyle='#fff';g.fillRect(0,0,W,H);if(bg)g.drawImage(bg,0,0,W,H);if(grid)drawGrid();strokes.forEach(drawStroke);}
+ const pt=e=>{const r=cv.getBoundingClientRect();const pr=e.pointerType==='pen'?(e.pressure||.5):.5;return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height,pr];};
+ cv.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')penSeen=true;if(penSeen&&e.pointerType==='touch')return;e.preventDefault();cv.setPointerCapture(e.pointerId);curS={color:tool.color,size:tool.size,erase:tool.erase,pts:[pt(e)],pid:e.pointerId};strokes.push(curS);redo=[];drawStroke(curS);});
+ cv.addEventListener('pointermove',e=>{if(!curS||e.pointerId!==curS.pid)return;e.preventDefault();const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];for(const ev of evs){const q=pt(ev),last=curS.pts[curS.pts.length-1];if(Math.hypot(q[0]-last[0],q[1]-last[1])<1.2)continue;curS.pts.push(q);seg(curS,last,q);}});
+ const end=e=>{if(curS&&e.pointerId===curS.pid){delete curS.pid;curS=null;}};
+ cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+ ov.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+ document.body.append(ov);document.body.style.overflow='hidden';window.addEventListener('resize',fit);
+ sync();fit();redraw();
+ if(bgData){const im=new Image();im.onload=()=>{bg=im;redraw();};im.src=bgData;}
+}
+
+/* ===== Home ===== */
+function renderHome(){
+ if(cur&&saveT)saveNow();cur=null;photos=[];show('home');
+ const ix=loadIndex(),list=$('#bogenlist');list.innerHTML='';
+ if(!ix.length)list.append(h('p',{class:'empty'},'Noch keine Aufnahmebögen auf diesem Gerät. Lege einen neuen an oder importiere eine JSON-Datei.'));
+ ix.forEach(x=>{const d=new Date(x.updated);list.append(h('div',{class:'bogencard'},
+  h('div',{class:'bc-main',onclick:()=>openBogen(x.id)},h('div',{class:'bc-title'},x.title),h('div',{class:'bc-date'},'zuletzt bearbeitet '+d.toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'}))),
+  h('div',{class:'bc-actions'},h('button',{class:'btn btn-sm',onclick:()=>openBogen(x.id)},'Öffnen'),h('button',{class:'btn btn-ghost btn-sm',onclick:()=>exportBogen(x.id)},'Export'),h('button',{class:'btn btn-ghost btn-sm danger',onclick:()=>deleteBogen(x.id)},'Löschen'))));});
+ if(navigator.storage?.estimate)navigator.storage.estimate().then(e=>{$('#storinfo').textContent=`Gerätespeicher belegt: ${(e.usage/1048576).toFixed(1)} MB. Die Daten liegen nur auf diesem Gerät – nach dem Termin exportieren und im Projektordner ablegen.`;});
+}
+async function openBogen(id){cur=loadBogen(id);if(!cur){alert('Bogen nicht gefunden.');return;}cur.v=cur.v||{};photos=await idbByBogen(id).catch(()=>[]);renderEditor();}
+function newBogen(){const now=new Date().toISOString();const v={'termin.datum':today()};cur={id:uid(),format:'ik-isfp-aufnahme',version:1,created:now,updated:now,v};photos=[];renderEditor();saveNow();}
+async function deleteBogen(id){const b=loadBogen(id);if(!confirm(`Aufnahmebogen „${b?titleOf(b):id}“ inkl. aller Fotos endgültig löschen?\n\nTipp: vorher exportieren.`))return;localStorage.removeItem(LS_B+id);saveIndex(loadIndex().filter(x=>x.id!==id));try{for(const p of await idbByBogen(id))await idbDel(p.id);}catch{}renderHome();}
+
+/* ===== Bericht (Druck + Text) ===== */
+function fmt(f,v){if(!filled(v))return'';switch(f.type){case'num':return v+(f.unit?' '+f.unit:'');case'multi':return v.join(', ');case'date':return deDate(v);case'doclist':return Object.entries(v).map(([k,s])=>`${k}: ${s}`).join('\n');default:return String(v);}}
+function collect(fields,get,slot,ps,withEmpty){
+ const rows=[],items=[],pics=[];
+ fields.forEach(f=>{
+  if(f.type==='hint')return;
+  if(f.type==='photos'){ps.filter(p=>p.slot===slot(f.id)).sort((a,b)=>a.ts-b.ts).forEach(p=>pics.push(p));return;}
+  if(f.type==='repeat'){const a=get(f.id)||[];a.forEach((it,i)=>items.push({title:`${f.item} ${i+1}`,...collect(f.fields,id=>it[id],id=>slot(f.id)+'.'+it._uid+'.'+id,ps,withEmpty)}));
+   if(withEmpty&&!a.length)for(let i=0;i<(f.blank||1);i++)items.push({title:`${f.item} ${i+1}`,...collect(f.fields,()=>undefined,()=>'',[],true)});return;}
+  let val=fmt(f,get(f.id));const extra=get(f.id+'_txt');if(extra)val=val?val+' – '+extra:extra;
+  if(val||withEmpty)rows.push({label:f.label,value:val,f});
+ });
+ return{rows,items,pics};
+}
+const buildReport=(b,ps,withEmpty)=>S.map(sec=>({title:sec.title,...collect(sec.fields,id=>(b.v||{})[sec.id+'.'+id],id=>sec.id+'.'+id,ps,withEmpty)}));
+const nonEmpty=s=>s.rows.length||s.items.length||s.pics.length;
+
+const picName=p=>(p.kind==='sketch'?'Skizze':'Foto')+(p.caption?': '+p.caption:'');
+function textReport(b,ps){
+ const L=[`# Aufnahmebogen Ortstermin iSFP – ${titleOf(b)}`];
+ buildReport(b,ps,false).forEach((s,i)=>{if(!nonEmpty(s))return;L.push('',`## ${i+1}. ${s.title}`);s.rows.forEach(r=>L.push(`- ${r.label}: ${r.value.replace(/\n/g,'; ')}`));
+  s.items.forEach(it=>{L.push(`### ${it.title}`);it.rows.forEach(r=>L.push(`- ${r.label}: ${r.value.replace(/\n/g,'; ')}`));if(it.pics.length)L.push(`- Fotos/Skizzen: ${it.pics.map(picName).join('; ')}`);});
+  if(s.pics.length)L.push(`- Fotos/Skizzen: ${s.pics.map(picName).join('; ')}`);});
+ return L.join('\n');
+}
+
+function printBogen(b,ps,withEmpty){
+ const v=b.v||{},rep=buildReport(b,ps,withEmpty);
+ const cell=r=>{if(r.value)return esc(r.value).replace(/\n/g,'<br>');const f=r.f;
+  if(f.options)return '<span class="opts">'+f.options.map(o=>'☐&nbsp;'+esc(o)).join(' &nbsp; ')+(f.other?' &nbsp; ☐&nbsp;Sonstiges: ______':'')+'</span>';
+  if(f.type==='doclist')return '<span class="opts">'+f.items.map(i=>esc(i)+': ☐ liegt vor ☐ nachreichen ☐ fehlt').join('<br>')+'</span>';
+  return '<span class="blank"></span>'+(f.type==='area'?'<span class="blank"></span><span class="blank"></span>':'');};
+ const tbl=rows=>rows.length?'<table>'+rows.map(r=>`<tr><th>${esc(r.label)}${r.f.unit&&!r.value?' ['+esc(r.f.unit)+']':''}</th><td>${cell(r)}</td></tr>`).join('')+'</table>':'';
+ const pics=ps=>ps.length?'<div class="pgrid">'+ps.map(p=>`<figure${p.kind==='sketch'?' class="sk"':''}><img src="${p.data}"><figcaption>${esc(p.caption||'')}</figcaption></figure>`).join('')+'</div>':'';
+ const sub=withEmpty?'Objekt: ________________________________ &nbsp; Datum: ____________':esc(titleOf(b))+(v['termin.datum']?' · Ortstermin '+deDate(v['termin.datum']):'');
+ let html=`<div class="phead"><img src="logo.jpg" alt=""><div class="pclaimbox"><div class="pclaim">${OFFICE.claim}</div>${OFFICE.adr}<br>${OFFICE.tel} · ${OFFICE.web}</div></div>
+ <h1>Aufnahmebogen Ortstermin iSFP</h1><div class="psub">${sub}</div>${withEmpty?'':'<div class="pnote">Interne Bestandsaufnahme – nur ausgefüllte Angaben.</div>'}`;
+ rep.forEach((s,i)=>{if(!withEmpty&&!nonEmpty(s))return;html+=`<section><h2>${i+1}. ${esc(s.title)}</h2>${tbl(s.rows)}${s.items.map(it=>`<h3>${esc(it.title)}</h3>${tbl(it.rows)}${pics(it.pics)}`).join('')}${pics(s.pics)}</section>`;});
+ html+=`<div class="pfoot">Ingenieurbüro Kaufmann · ${OFFICE.adr} · ${OFFICE.tel} · ${OFFICE.web}</div>`;
+ $('#print').innerHTML=html;
+ const imgs=[...$('#print').querySelectorAll('img')];
+ Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r;}))).then(()=>setTimeout(()=>window.print(),150));
+}
+
+/* ===== Export / Import ===== */
+async function exportBogen(id){
+ if(cur&&(!id||id===cur.id))saveNow();
+ const b=id?loadBogen(id):cur;if(!b)return;
+ const ps=(cur&&b.id===cur.id)?photos:await idbByBogen(b.id).catch(()=>[]);
+ const out={format:'ik-isfp-aufnahme',version:1,exportiert:new Date().toISOString(),bericht_text:textReport(b,ps),bogen:b,photos:ps.map(({id,slot,caption,data,ts,kind})=>({id,slot,caption,data,ts,kind:kind||'foto'}))};
+ const v=b.v||{};
+ const name=['iSFP-Aufnahme',v['termin.projektnr'],(v['termin.eigentuemer']||'').trim().split(/\s+/).pop(),v['termin.datum']].filter(Boolean).join('_').replace(/[^\wäöüÄÖÜß.-]+/g,'-')+'.json';
+ const file=new File([JSON.stringify(out)],name,{type:'application/json'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)){try{await navigator.share({files:[file],title:name});return;}catch(e){if(e.name==='AbortError')return;}}
+ const a=h('a',{href:URL.createObjectURL(file),download:name});document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},3000);
+}
+async function importFile(file){
+ try{const o=JSON.parse(await file.text());if(o.format!=='ik-isfp-aufnahme'||!o.bogen?.id)throw new Error('keine gültige Aufnahmebogen-Datei');
+  const b=o.bogen;if(loadBogen(b.id)&&!confirm('Dieser Bogen ist auf dem Gerät schon vorhanden. Überschreiben?'))return;
+  localStorage.setItem(LS_B+b.id,JSON.stringify(b));const ix=loadIndex().filter(x=>x.id!==b.id);ix.unshift({id:b.id,title:titleOf(b),updated:b.updated||new Date().toISOString()});saveIndex(ix);
+  for(const p of await idbByBogen(b.id).catch(()=>[]))await idbDel(p.id);
+  for(const p of o.photos||[])await idbPut({...p,bogen:b.id});
+  renderHome();}catch(e){alert('Import fehlgeschlagen: '+e.message);}
+}
+
+/* ===== Start ===== */
+$('#btnNew').addEventListener('click',newBogen);
+$('#btnBack').addEventListener('click',renderHome);
+$('#btnExport').addEventListener('click',()=>exportBogen());
+$('#btnPrint').addEventListener('click',()=>{saveNow();printBogen(cur,photos,false);});
+$('#btnBlank').addEventListener('click',()=>printBogen({v:{}},[],true));
+$('#btnTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+$('#impFile').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)importFile(f);});
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+renderHome();
+</script>
+</body>
+</html>
