@@ -112,6 +112,7 @@ label.btn input{display:none}
 .bottombar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:8px 12px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;z-index:18}
 #print{display:none}
 .ink{width:100%;border:1.5px solid var(--line);border-radius:9px;background:#fff repeating-linear-gradient(to bottom,transparent 0,transparent 41px,#e3ebef 41px,#e3ebef 42px);overflow:hidden;touch-action:none}
+.ink,.ink canvas,#sketch canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .ink canvas{display:block;touch-action:none}
 .inkbar{display:flex;gap:6px;justify-content:flex-end;margin-top:4px}
 .inkbtn{border:1px solid var(--line);background:#fff;color:var(--grey);border-radius:7px;padding:4px 9px;font-size:.78rem;cursor:pointer}
@@ -158,7 +159,7 @@ body.pen .fields{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
 <body>
 <div id="app">
   <div id="home">
-    <div class="top"><div class="brand">Ingenieurbüro Kaufmann<small>TGA-Planung · Energieberatung · Wärmekonzepte</small></div><div class="title"></div><span class="ver">iSFP-Aufnahme v9</span></div>
+    <div class="top"><div class="brand">Ingenieurbüro Kaufmann<small>TGA-Planung · Energieberatung · Wärmekonzepte</small></div><div class="title"></div><span class="ver">iSFP-Aufnahme v10</span></div>
     <main>
       <div class="home-hero">
         <img id="heroLogo" alt="Ingenieurbüro Kaufmann">
@@ -811,6 +812,7 @@ window.addEventListener('pagehide',()=>{if(saveT)saveNow();});
 const WIDE=new Set(['chips','multi','area','photos','repeat','doclist','hint']);
 function show(id){['home','editor'].forEach(x=>$('#'+x).classList.toggle('hidden',x!==id));}
 
+function noTouchDefault(el){const stop=e=>{if(e.cancelable)e.preventDefault();};['touchstart','touchmove','touchend','gesturestart'].forEach(t=>el.addEventListener(t,stop,{passive:false}));el.addEventListener('contextmenu',stop);el.addEventListener('selectstart',stop);}
 let PEN=(()=>{try{return localStorage.getItem('ik_isfp_pen')!=='0'}catch{return true}})();
 let PADS=[];
 window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(()=>PADS.forEach(p=>p.isConnected()&&p.size()),200);});
@@ -831,10 +833,11 @@ function inkPad(slot,tall){
   await idbPut(rec);save();}
  const schedule=()=>{clearTimeout(tSave);tSave=setTimeout(persist,900);};
  const pt=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top,e.pointerType==='pen'?(e.pressure||.5):.5];};
- cv.addEventListener('pointerdown',e=>{if(e.pointerType==='pen')penSeen=true;if(penSeen&&e.pointerType==='touch')return;e.preventDefault();cv.setPointerCapture(e.pointerId);curS={pts:[pt(e)],pid:e.pointerId};strokes.push(curS);drawStroke(curS);clearTimeout(tSave);});
+ cv.addEventListener('pointerdown',e=>{if(!cssW||cv.width<10)size();if(e.pointerType==='pen')penSeen=true;if(penSeen&&e.pointerType==='touch')return;e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch{}curS={pts:[pt(e)],pid:e.pointerId};strokes.push(curS);drawStroke(curS);clearTimeout(tSave);});
  cv.addEventListener('pointermove',e=>{if(!curS||e.pointerId!==curS.pid)return;e.preventDefault();const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];for(const ev of evs){const q=pt(ev),l=curS.pts[curS.pts.length-1];if(Math.hypot(q[0]-l[0],q[1]-l[1])<0.6)continue;curS.pts.push(q);drawSeg(curS,l,q);}});
  const end=e=>{if(curS&&e.pointerId===curS.pid){curS=null;schedule();}};
  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+ noTouchDefault(cv);
  const undo=h('button',{type:'button',class:'inkbtn'},'↶ zurück');undo.addEventListener('click',()=>{if(strokes.length){strokes.pop();redraw();schedule();}});
  const clr=h('button',{type:'button',class:'inkbtn'},'✕ leeren');clr.addEventListener('click',()=>{if((bg||strokes.length)&&confirm('Handschrift in diesem Feld löschen?')){bg=null;strokes=[];redraw();clearTimeout(tSave);persist();}});
  const pad={size,isConnected:()=>wrap.isConnected};PADS.push(pad);
@@ -969,6 +972,7 @@ function openSketch(bgData,onSave){
  cv.addEventListener('pointermove',e=>{if(!curS||e.pointerId!==curS.pid)return;e.preventDefault();const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];for(const ev of evs){const q=pt(ev),last=curS.pts[curS.pts.length-1];if(Math.hypot(q[0]-last[0],q[1]-last[1])<1.2)continue;curS.pts.push(q);seg(curS,last,q);}});
  const end=e=>{if(curS&&e.pointerId===curS.pid){delete curS.pid;curS=null;}};
  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+ noTouchDefault(cv);
  ov.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
  document.body.append(ov);document.body.style.overflow='hidden';window.addEventListener('resize',fit);
  sync();fit();redraw();
